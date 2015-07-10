@@ -1,0 +1,219 @@
+html {
+	background-color: #F5F5F5;
+	font-family: "Roboto",arial,sans-serif;
+	color: #212121;
+}
+
+link[title], meta[name] {
+	text-decoration: none;
+	color: #FFF;
+	display: inline-block;
+	overflow: hidden;
+	white-space: nowrap;
+	box-sizing: border-box;
+}
+
+link[title]::after {
+	text-transform: uppercase;
+	content: attr(title);
+	padding: 0 24px;
+}
+link[rel=canonical] {
+	border-bottom: 2px solid white;
+}
+link[rel=alternate] {
+	color: #F6BF91;
+}
+
+meta[name]::after {
+	content: attr(content) " " attr(name);
+}
+meta[name=songs] {
+	text-align: right;
+	flex: auto;
+}
+
+body {
+	background-color: #FFF;
+	box-shadow: 0px 1px 4px 0px rgba(0, 0, 0, 0.37);
+}
+
+a {
+	background-color: inherit;
+	border: none;
+	color: inherit;
+	font-family: inherit;
+	font-size: inherit;
+	text-decoration: inherit;
+}
+a:hover {
+	text-decoration: underline;
+}
+
+#index {
+	background-color: white;
+}
+
+#index body {
+	box-shadow: none;
+}
+
+#index img {
+	margin: 0 auto;
+	display: block;
+}
+
+#index h1 {
+	font-size: 42px;
+	font-weight: 300;
+	margin: 0px auto 12px;
+	line-height: 52px;
+	text-align: center;
+	letter-spacing: 0.02em;
+}
+
+#index p {
+	opacity: 0.54;
+	line-height: 32px;
+	font-size: 24px;
+	letter-spacing: 0.01em;
+	margin: 14px auto 12px;
+	max-width: 600px;
+}
+
+#index a {
+	color: #EF6C00;
+}
+
+#list head {
+	display: flex;
+	padding: 0 30px;
+	background-color: #EF6C00;
+	font-size: 13px;
+	height: 64px;
+	line-height: 64px;
+}
+
+#list body {
+	margin: 24px 72px 30px;
+	font-size: 15px;
+	line-height: 22px;
+}
+
+form {
+	padding: 16px 20px;
+}
+
+table {
+	margin-top: 20px;
+	padding: 16px 0;
+	width: 100%;
+	table-layout: fixed;
+	text-indent: 8px;
+	border-spacing: 0;
+	cursor: pointer;
+}
+th:first-child, td:first-child {
+	padding-left: 16px !important;
+}
+th:last-child, td:last-child {
+	padding-right: 16px !important;
+}
+
+th {
+	height: 36px;
+	text-transform: uppercase;
+	font-size: 12px;
+	font-weight: bold;
+	color: #333;
+	text-align: left;
+	white-space: nowrap;
+	overflow: hidden;
+}
+th[data-sorted-direction=descending]::after {
+	color: #616161;
+	content: " ⬆";
+}
+th[data-sorted-direction=ascending]::after {
+	color: #616161;
+	content: " ⬇";
+}
+
+tbody tr:hover {
+	background-color: #EEE;
+}
+tbody tr:active {
+	background-color: #F5F5F5;
+}
+
+td {
+	height: 64px;
+	white-space: nowrap;
+	overflow: hidden;
+	color: #616161;
+}
+
+th#title, td[headers=title] {
+	color: #212121;
+	width: 42%;
+}
+
+th#artist, td[headers=artist] {
+	width: 32%;
+}
+
+th#album, td[headers=album] {
+	width: 26%;
+}
+
+th#dl, td[headers=dl] {
+	width: 42px;
+}
+
+a[download] {
+	display: block;
+	width: 100%;
+	height: 100%;
+	color: #212121;
+	line-height: 64px;
+	font-size: 32px;
+	visibility: hidden;
+	overflow: hidden;
+}
+tbody tr:hover a[download] {
+	visibility: visible;
+}
+
+#insert body {
+	font-size: 13px;
+	line-height: 20px;
+	margin: 16px auto;
+	padding: 24px;
+	max-width: 600px;
+}
+
+#insert h1 {
+	font-size: 20px;
+	font-weight: 500;
+	margin: 0px 0px 12px;
+}
+
+dl {
+	margin: 0;
+}
+
+dt {
+	padding-top: 12px;
+}
+
+dd {
+	color: #616161;
+	margin: 8px 0 0;
+	white-space: pre;
+	font-family: monospace;
+	padding-bottom: 12px;
+}
+
+dd:not(:last-child) {
+	border-bottom: 1px solid #E0E0E0;
+}
