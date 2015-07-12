@@ -1,0 +1,18 @@
+<style>
+body {
+	background-color: #F5F5F5;
+	margin: 16px 72px 30px;
+}
+iframe {
+	width: 100%;
+	border: 0;
+	box-shadow: 0px 1px 4px 0px rgba(0, 0, 0, 0.37);
+}
+</style>
+<iframe src="/tracks/"></iframe>
+<script>
+var frame = document.getElementsByTagName("iframe")[0]
+window.addEventListener("message", function(e){
+	frame.style.height = e.data + "px"
+})
+</script>
