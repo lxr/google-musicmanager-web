@@ -15,6 +15,7 @@ import (
 )
 
 var funcMap = map[string]interface{}{
+	"incr":    func(i int) int { return i + 1 },
 	"reverse": reversed,
 }
 var scopes = []string{musicmanager.MusicManagerScope, plus.PlusMeScope}

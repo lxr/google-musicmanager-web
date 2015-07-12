@@ -1,31 +1,45 @@
 <!DOCTYPE html>
-<html id="list">
+<html>
 	<head>
-		{{define "canon"}}{{if .}}canonical{{else}}alternate{{end}}{{end}}
+		{{$purchasedOnly := printf "%s" .XXX_unrecognized}}
 		<meta charset="UTF-8">
-		<title>{{if not .XXX_unrecognized}}All tracks{{else}}Purchased and promotional{{end}} - Google Play Music Web Manager</title>
+		<title>{{if not $purchasedOnly}}All tracks{{else}}Purchased and promotional{{end}} - Google Play Music Web Manager</title>
 		<script src="/static/sortable.js"></script>
 		<link rel="shortcut icon" href="/static/icon.png">
 		<link rel="stylesheet" href="/static/style.css">
-		<link title="All tracks" href="?" rel="{{template "canon" not .XXX_unrecognized}}">
-		<link title="Purchased and promotional" href="?purchasedOnly=true" rel="{{template "canon" .XXX_unrecognized}}">
-		<meta name="songs" content="{{len .GetDownloadTrackInfo}}">
-		{{if .GetContinuationToken}}
-		<link title="Next page" rel="next"
-			data-token="{{.GetContinuationToken}}"
-			href="?pageToken={{.GetContinuationToken}}&purchasedOnly={{printf "%s" .XXX_unrecognized}}"
-		>
-		{{end}}
+		<script>
+		window.onload = function () {
+			window.parent.postMessage(document.body.scrollHeight, "*")
+		}
+		</script>
 	</head>
-	<body>
-		<form method="post" enctype="multipart/form-data">
-			<label>Upload a song (MP3)</label>
-			<input type="file" required accept="audio/mpeg,.mp3" name="track">
-			<input type="submit">
-		</form>
+	<body id="list">
+		<img class="cover" src="/static/icon.png" alt="">
+		<div class="info">
+			<h1>{{if not $purchasedOnly}}All tracks{{else}}Purchased and promotional{{end}}</h1>
+			<p>
+				<a href="?">All tracks</a> •
+				<a href="?purchasedOnly=true">Purchased and promotional</a>
+			</p>
+			<p class="stats">
+				{{len .GetDownloadTrackInfo}} songs
+				{{if .GetContinuationToken}}
+				• <a rel="next"
+					data-token="{{.GetContinuationToken}}"
+					href="?pageToken={{.GetContinuationToken}}&purchasedOnly={{$purchasedOnly}}"
+				>Next page</a>
+				{{end}}
+			</p>
+			<form method="post" enctype="multipart/form-data">
+				<label>Upload a song (MP3)</label>
+				<input type="file" required accept="audio/mpeg,.mp3" name="track">
+				<input type="submit">
+			</form>
+		</div>
 		<table id="response" data-sortable>
 			<thead>
 				<tr>
+					<th id="index">#</th>
 					<th id="title">Name</th>
 					<th id="artist">Artist</th>
 					<th id="album">Album</th>
@@ -33,12 +47,13 @@
 				</tr>
 			</thead>
 			<tbody>
-			{{range reverse .GetDownloadTrackInfo}}
-				<tr ondblclick="this.querySelector('[download]').click()">
-					<td headers="title">{{.GetTitle}}</td>
-					<td headers="artist">{{.GetArtist}}</td>
-					<td headers="album">{{.GetAlbum}}</td>
-					<td headers="dl"><a download href="{{.GetId}}">⬇</a></td>
+			{{range $i, $track := reverse .GetDownloadTrackInfo}}
+				<tr id="{{$track.GetId}}" ondblclick="this.querySelector('[download]').click()">
+					<td headers="index">{{incr $i}}</td>
+					<td headers="title">{{$track.GetTitle}}</td>
+					<td headers="artist">{{$track.GetArtist}}</td>
+					<td headers="album">{{$track.GetAlbum}}</td>
+					<td headers="dl"><a download href="{{$track.GetId}}">⬇</a></td>
 				</tr>
 			{{end}}
 			</tbody>

@@ -12,10 +12,10 @@ and endpoints it supports are as follows:
 		to filter only for purchased and promotional tracks, and
 		pageToken={string} to page through large result sets.
 		(The token for the next page can be found in the
-		data-token attribute of the link[rel=next] element.)
+		data-token attribute of the a[rel=next] element.)
 
-		In the listing, the href attribute of the anchor element
-		in the dl column contains the ID of a track.
+		In the listing, the id attribute of a table row contains
+		the ID of the corresponding track.
 
 	GET /tracks/{id}
 		Downloads the track with the given ID.  The
