@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -15,10 +14,13 @@ import (
 	"google-musicmanager-go"
 )
 
+var funcMap = map[string]interface{}{
+	"reverse": reversed,
+}
 var scopes = []string{musicmanager.MusicManagerScope, plus.PlusMeScope}
 var conf = googleMustConfigFromFile("credentials.json", scopes...)
 var tpls = template.Must(template.New("static").
-	Funcs(map[string]interface{}{"reverse": reversed}).
+	Funcs(funcMap).
 	ParseGlob("static/*.tpl"))
 
 func init() {
@@ -54,7 +56,8 @@ func auth(_ interface{}, w http.ResponseWriter, r *http.Request) error {
 	// a redirect URL is always created dynamically by appending
 	// "/oauth2callback" to the scheme and host of the domain on
 	// which Google Play Music Web Manager received the request for
-	// "/auth".
+	// "/auth".  This is so that the redirect URL can be generated
+	// correctly on the App Engine dev server.
 	conf.RedirectURL = getRedirectURL(getContext(r))
 	httpSetCookie(w, r, "state", state)
 	httpSetCookie(w, r, "redirect", r.FormValue("redirect"))
@@ -118,19 +121,6 @@ func oauth2callback(_ interface{}, w http.ResponseWriter, r *http.Request) error
 }
 
 func initMusicManager(r *http.Request) (interface{}, error) {
-	// Try to read all multipart files to memory.  This is necessary
-	// due to the way tracksInsert works: the HTTP response is
-	// returned when the upload starts, not when it finishes.
-	// The upload is thus done in a goroutine that outlives the
-	// request handler, and any temporary files it could create.
-	//
-	// We substract one from MaxInt64 because the code for
-	// ParseMultipartForm adds one to the argument for whatever
-	// reason.
-	err := r.ParseMultipartForm(math.MaxInt64 - 1)
-	if err != nil && err != http.ErrNotMultipart {
-		return nil, err
-	}
 	// If either the access token or uploader ID cookie is missing,
 	// autoredirect to the start of the authorization flow rather
 	// than just report an error.  The redirect parameter lets the
@@ -177,16 +167,16 @@ func register(client interface{}, w http.ResponseWriter, r *http.Request) error 
 }
 
 func tracksGet(client interface{}, w http.ResponseWriter, r *http.Request) error {
-	ID := r.URL.Path
-	track, err := client.(*musicmanager.Service).Tracks.Get(ID).Do()
+	id := r.URL.Path
+	track, err := client.(*musicmanager.Service).Tracks.Get(id).Do()
 	if err != nil {
 		return err
 	}
 	if name := track.Name(); name != "" {
-		// url.QueryEscape encodes spaces as plus signs, which
-		// popular browsers don't understand.  Percent-encode
-		// them instead.
 		name = url.QueryEscape(name)
+		// url.QueryEscape encodes spaces as plus signs, which
+		// popular browsers don't understand.  Try to
+		// percent-encode them instead.
 		if tmp, err := regexpReplaceAllString(`\+`, name, "%20"); err == nil {
 			name = tmp
 		}
