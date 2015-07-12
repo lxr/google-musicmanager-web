@@ -5,7 +5,7 @@
 		<meta charset="UTF-8">
 		<title>{{if not $purchasedOnly}}All tracks{{else}}Purchased and promotional{{end}} - Google Play Music Web Manager</title>
 		<script src="/static/sortable.js"></script>
-		<link rel="shortcut icon" href="/static/icon.png">
+		<link rel="icon" href="/static/icon.png">
 		<link rel="stylesheet" href="/static/style.css">
 		<script>
 		window.onload = function () {
