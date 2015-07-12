@@ -9,6 +9,7 @@
 		<link rel="stylesheet" href="/static/style.css">
 		<script>
 		window.onload = function () {
+			Sortable.init()
 			window.parent.postMessage(document.body.scrollHeight, "*")
 		}
 		</script>
