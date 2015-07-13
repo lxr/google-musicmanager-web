@@ -128,9 +128,8 @@ func initMusicManager(r *http.Request) (interface{}, error) {
 	// user continue right where they left off.
 
 	// BUG(lor): If the access_token cookie expires just before
-	// submitting new tracks for upload, they will need to be
-	// resubmitted after the auth flow has finished, as it cannot
-	// preserve POST data.
+	// uploading new tracks, they will need to be resubmitted after
+	// the auth flow has finished, as it cannot preserve POST data.
 	tok, _ := r.Cookie("access_token")
 	id, _ := r.Cookie("uploader_id")
 	if tok == nil || id == nil {
@@ -164,7 +163,7 @@ func register(client interface{}, w http.ResponseWriter, r *http.Request) error 
 		http.Redirect(w, r, redirect, http.StatusFound)
 	}
 	fmt.Fprintln(w, musicmanager.GetRegisterError("OK"))
-	return err
+	return nil
 }
 
 func tracksGet(client interface{}, w http.ResponseWriter, r *http.Request) error {
@@ -189,8 +188,8 @@ func tracksGet(client interface{}, w http.ResponseWriter, r *http.Request) error
 		w.Header().Set("Content-Length", size)
 	}
 	w.Header().Set("Content-Type", "audio/mpeg")
-	_, err = io.Copy(w, track)
-	return err
+	io.Copy(w, track)
+	return nil
 }
 
 func tracksList(client interface{}, w http.ResponseWriter, r *http.Request) error {

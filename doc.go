@@ -12,7 +12,8 @@ and endpoints it supports are as follows:
 		to filter only for purchased and promotional tracks, and
 		pageToken={string} to page through large result sets.
 		(The token for the next page can be found in the
-		data-token attribute of the a[rel=next] element.)
+		data-token attribute of the a[rel=next] element, if
+		one exists.)
 
 		In the listing, the id attribute of a table row contains
 		the ID of the corresponding track.
