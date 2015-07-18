@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"reflect"
 	"regexp"
+	"time"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -80,4 +81,10 @@ func reversed(x interface{}) []interface{} {
 		r[n-i-1] = s.Index(i).Interface()
 	}
 	return r
+}
+
+// unix2Time returns the local Time corresponding to the given Unix time
+// in microseconds.
+func unix2Time(msec int64) time.Time {
+	return time.Unix(msec/1000000, (msec%1000000)*1000)
 }

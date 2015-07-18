@@ -9,7 +9,9 @@ and endpoints it supports are as follows:
 		Returns an HTML listing of all tracks in the user's
 		library, from most recently accessed to the least.
 		Takes the optional query parameter purchasedOnly=true
-		to filter only for purchased and promotional tracks, and
+		to filter only for purchased and promotional tracks,
+		updatedMin={{RFC3339}} to filter out tracks that were
+		last modified before the given timestamp, and
 		pageToken={string} to page through large result sets.
 		(The token for the next page can be found in the
 		data-token attribute of the a[rel=next] element, if

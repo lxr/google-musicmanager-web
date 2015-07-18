@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"golang.org/x/oauth2"
 	"google.golang.org/api/plus/v1"
@@ -17,6 +18,7 @@ import (
 var funcMap = map[string]interface{}{
 	"incr":    func(i int) int { return i + 1 },
 	"reverse": reversed,
+	"time":    unix2Time,
 }
 var scopes = []string{musicmanager.MusicManagerScope, plus.PlusMeScope}
 var conf = googleMustConfigFromFile("credentials.json", scopes...)
@@ -195,9 +197,9 @@ func tracksGet(client interface{}, w http.ResponseWriter, r *http.Request) error
 func tracksList(client interface{}, w http.ResponseWriter, r *http.Request) error {
 	list := client.(*musicmanager.Service).Tracks.List()
 	// Parse the options.
-	//if tmp := list.UpdatedMin(r.FormValue("updatedMin")); tmp != nil {
-	//	list = tmp
-	//}
+	if t, err := time.Parse(time.RFC3339Nano, r.FormValue("updatedMin")); err == nil {
+		list.UpdatedMin(t.UnixNano()/1000)
+	}
 	purchasedOnly, err := strconv.ParseBool(r.FormValue("purchasedOnly"))
 	if err == nil {
 		list.PurchasedOnly(purchasedOnly)

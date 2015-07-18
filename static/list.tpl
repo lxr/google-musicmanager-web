@@ -23,7 +23,8 @@
 				<a href="?purchasedOnly=true">Purchased and promotional</a>
 			</p>
 			<p class="stats">
-				{{len .GetDownloadTrackInfo}} songs
+				{{len .GetDownloadTrackInfo}} songs •
+				last updated {{(time .GetUpdatedMin).Format "2006-01-02T15:04:05Z07:00"}}
 				{{if .GetContinuationToken}}
 				• <a rel="next"
 					data-token="{{.GetContinuationToken}}"
