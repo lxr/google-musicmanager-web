@@ -40,13 +40,6 @@ func init() {
 		List:   tracksList,
 		Insert: tracksInsert,
 	})
-	/*
-		http.Handle("/jobs/", &REST{
-			Init:   initMusicManager,
-			List:   jobsList,
-			Delete: jobsCancel,
-		})
-	*/
 }
 
 func auth(_ interface{}, w http.ResponseWriter, r *http.Request) error {
@@ -198,7 +191,7 @@ func tracksList(client interface{}, w http.ResponseWriter, r *http.Request) erro
 	list := client.(*musicmanager.Service).Tracks.List()
 	// Parse the options.
 	if t, err := time.Parse(time.RFC3339Nano, r.FormValue("updatedMin")); err == nil {
-		list.UpdatedMin(t.UnixNano()/1000)
+		list.UpdatedMin(t.UnixNano() / 1000)
 	}
 	purchasedOnly, err := strconv.ParseBool(r.FormValue("purchasedOnly"))
 	if err == nil {
@@ -244,25 +237,3 @@ func tracksInsert(client interface{}, w http.ResponseWriter, r *http.Request) er
 	fmt.Fprintln(w, serverID)
 	return nil
 }
-
-/*
-func jobsList(client interface{}, w http.ResponseWriter, r *http.Request) error {
-	jobs, err := client.(*musicmanager.Service).Jobs.List().Do()
-	if err != nil {
-		return err
-	}
-	for _, job := range jobs {
-		fmt.Fprintf(w, "%+v\n", job)
-	}
-	return nil
-}
-
-func jobsCancel(client interface{}, w http.ResponseWriter, r *http.Request) error {
-	err := client.(*musicmanager.Service).Jobs.Cancel().Do()
-	if err != nil {
-		return err
-	}
-	http.Redirect(w, r, "/jobs/", http.StatusSeeOther)
-	return nil
-}
-*/
