@@ -1,3 +1,5 @@
 * Errors should be reported such that one can easily navigate back,
   even from within an iframe.
 * Perform redirect on invalid oauth token, don't report an error.
+* The index column in the song listing should sort in ascending order
+  by default when clicked, but sortable.js does the opposite.
