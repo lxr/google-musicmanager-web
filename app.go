@@ -48,14 +48,7 @@ func auth(_ interface{}, w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	// BUG(lor): Google Play Music Web Manager ignores the
-	// "redirect_uris" property of the credentials file.  Instead,
-	// a redirect URL is always created dynamically by appending
-	// "/oauth2callback" to the scheme and host of the domain on
-	// which Google Play Music Web Manager received the request for
-	// "/auth".  This is so that the redirect URL can be generated
-	// correctly on the App Engine dev server.
-	conf.RedirectURL = getRedirectURL(getContext(r))
+	conf.RedirectURL = getRedirectURL(r)
 	httpSetCookie(w, r, "state", state)
 	httpSetCookie(w, r, "redirect", r.FormValue("redirect"))
 	http.Redirect(w, r, conf.AuthCodeURL(state), http.StatusFound)

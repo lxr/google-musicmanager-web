@@ -52,6 +52,16 @@ func httpSetCookie(w http.ResponseWriter, r *http.Request, name, value string) {
 	})
 }
 
+// getRedirectURL generates an OAuth2 redirect URL redirecting to the
+// path /oauth2callback on the host on which the request was received.
+func getRedirectURL(r *http.Request) string {
+	scheme := "http://"
+	if r.TLS != nil {
+		scheme = "https://"
+	}
+	return scheme + r.Host + "/oauth2callback"
+}
+
 // nonce returns a base64-encoded string of n random bytes.
 func nonce(n int) (string, error) {
 	bytes := make([]byte, n)

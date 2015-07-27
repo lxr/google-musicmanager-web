@@ -107,7 +107,11 @@ API enabled, and a Go html/template file static/list.tpl. The latter
 is included with the default distribution; the former can be acquired by
 registering a new project in the Google Developers Console
 (https://console.developers.google.com) and creating a new client ID for
-a web application under the "Credentials" tab.
+a web application under the "Credentials" tab.  Note that Google Play
+Music Web Manager ignores the redirect_uris key of the credentials.json
+file; the OAuth2 redirect URL is instead generated dynamically by
+appending "/oauth2callback" to the host on which the request was
+received.
 
 */
 package main
