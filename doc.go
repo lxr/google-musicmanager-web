@@ -1,14 +1,14 @@
 /*
 
-Google Play Music Web Manager presents a RESTful web interface for
-managing your Google Play Music library. It takes a single argument, the
-TCP address where to start serving (default localhost:8080.) The methods
-and endpoints it supports are as follows:
+Google Play Music Web Manager presents a simple RESTful web interface
+for managing your Google Play Music library. It takes a single argument,
+the TCP address where to start serving (default localhost:8080.) The
+methods and endpoints it supports are as follows:
 
 	GET /tracks/
 		Returns an HTML listing of all tracks in the user's
 		library, from most recently accessed to the least.
-		Takes the optional query parameter purchasedOnly=true
+		Takes the optional query parameters purchasedOnly=true
 		to filter only for purchased and promotional tracks,
 		updatedMin={{RFC3339}} to filter out tracks that were
 		last modified before the given timestamp, and
@@ -21,19 +21,26 @@ and endpoints it supports are as follows:
 		the ID of the corresponding track.
 
 	GET /tracks/{id}
-		Downloads the track with the given ID.  The
-		Content-Disposition and Content-Length headers contain
-		a suggested filename for and the size of the track
-		in bytes respectively.
+		Redirects the client to a temporary
+		sj.googleusercontent.com download URL for the given
+		track.  The URL is also contained in the redirect
+		response body.
 
 	POST /tracks/
-		Uploads a new track to the user's library.  The POST
-		body must be in multipart format, with `track` being
-		the form variable read for the file to upload.  See the
-		BUGS section for limitations on uploading.  On success,
-		this method redirects back to the track listing; by
-		virtue of its ordering, the uploaded track should be at
-		the top.
+		Redirects the client to a temporary
+		uploadsj.clients.google.com upload URL.  The URL is also
+		contained in the redirect response body.  The redirect
+		is performed with the 307 Temporary Redirect status
+		code, which should transparently preserve the POST data
+		in modern clients.  The POST body should be raw MP3
+		data.  Google Play Music Web Manager only needs to read
+		the file metadata in order to generate the upload URL,
+		so ID3v2 tags are recommended, as the response handler
+		can then return without reading the entire file.  (A
+		consequence of this is that a Google Play Music Web
+		Manager needs to read a file with no tags in its
+		entirety, as any ID3v1 tags are located after the end of
+		the audio data.)
 
 All endpoints expect the request to carry the access_token and
 uploader_id cookies, which are a Google OAuth 2.0 token carrying the
@@ -105,10 +112,11 @@ a web application under the "Credentials" tab.
 */
 package main
 
-// BUG(lor): Google Play Music Web Manager is based on
-// google-musicmanager-go, and inherits its limitations: namely, only
-// MP3 files are supported, album art cannot be uploaded, and track
-// matching is not performed.
+// BUG(lor): Embedded album art is not currently uploaded.
+
+// BUG(lor): Until someone writes a pure-Go audio transcoding library,
+// Google Play Music Web Manager cannot perform song matching, and it
+// can only support MP3 files.
 
 // BUG(lor): Use of this program may constitute a violation of Google's
 // terms of service under paragraph 2 of

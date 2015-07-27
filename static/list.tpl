@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		{{$purchasedOnly := printf "%s" .XXX_unrecognized}}
 		<meta charset="UTF-8">
-		<title>{{if not $purchasedOnly}}All tracks{{else}}Purchased and promotional{{end}} - Google Play Music Web Manager</title>
+		<title>{{if not .PurchasedOnly}}All tracks{{else}}Purchased and promotional{{end}} - Google Play Music Web Manager</title>
 		<script src="/static/sortable.js"></script>
 		<link rel="icon" href="/static/icon.png">
 		<link rel="stylesheet" href="/static/style.css">
@@ -17,26 +16,21 @@
 	<body id="list">
 		<img class="cover" src="/static/icon.png" alt="">
 		<div class="info">
-			<h1>{{if not $purchasedOnly}}All tracks{{else}}Purchased and promotional{{end}}</h1>
+			<h1>{{if not .PurchasedOnly}}All tracks{{else}}Purchased and promotional{{end}}</h1>
 			<p>
 				<a href="?">All tracks</a> •
 				<a href="?purchasedOnly=true">Purchased and promotional</a>
 			</p>
 			<p class="stats">
-				{{len .GetDownloadTrackInfo}} songs •
-				last updated {{(time .GetUpdatedMin).Format "2006-01-02T15:04:05Z07:00"}}
-				{{if .GetContinuationToken}}
+				{{len .DownloadTrackInfo}} songs •
+				Last updated {{(time .UpdatedMin).Format "2006-01-02T15:04:05Z07:00"}}
+				{{if .ContinuationToken}}
 				• <a rel="next"
-					data-token="{{.GetContinuationToken}}"
-					href="?pageToken={{.GetContinuationToken}}&purchasedOnly={{$purchasedOnly}}"
+					data-token="{{.ContinuationToken}}"
+					href="?pageToken={{.ContinuationToken}}&purchasedOnly={{.PurchasedOnly}}"
 				>Next page</a>
 				{{end}}
 			</p>
-			<form method="post" enctype="multipart/form-data">
-				<label>Upload a song (MP3)</label>
-				<input type="file" required accept="audio/mpeg,.mp3" name="track">
-				<input type="submit">
-			</form>
 		</div>
 		<table id="response" data-sortable>
 			<thead>
@@ -49,13 +43,13 @@
 				</tr>
 			</thead>
 			<tbody>
-			{{range $i, $track := reverse .GetDownloadTrackInfo}}
-				<tr id="{{$track.GetId}}" ondblclick="this.querySelector('[download]').click()">
+			{{range $i, $track := .DownloadTrackInfo}}
+				<tr id="{{$track.Id}}" ondblclick="this.querySelector('[download]').click()">
 					<td headers="index">{{incr $i}}</td>
-					<td headers="title">{{$track.GetTitle}}</td>
-					<td headers="artist">{{$track.GetArtist}}</td>
-					<td headers="album">{{$track.GetAlbum}}</td>
-					<td headers="dl"><a download href="{{$track.GetId}}">⬇</a></td>
+					<td headers="title">{{$track.Title}}</td>
+					<td headers="artist">{{$track.Artist}}</td>
+					<td headers="album">{{$track.Album}}</td>
+					<td headers="dl"><a download href="{{$track.Id}}">⬇</a></td>
 				</tr>
 			{{end}}
 			</tbody>

@@ -3,9 +3,10 @@ package main
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
+	"io"
 	"io/ioutil"
 	"net/http"
-	"reflect"
 	"regexp"
 	"time"
 
@@ -71,20 +72,69 @@ func regexpReplaceAllString(pattern, src, repl string) (string, error) {
 	return re.ReplaceAllString(src, repl), nil
 }
 
-// reversed returns a reversed copy of the slice, array or string
-// argument.
-func reversed(x interface{}) []interface{} {
-	s := reflect.ValueOf(x)
-	n := s.Len()
-	r := make([]interface{}, n)
-	for i := 0; i < n; i++ {
-		r[n-i-1] = s.Index(i).Interface()
-	}
-	return r
-}
-
 // unix2Time returns the local Time corresponding to the given Unix time
 // in microseconds.
 func unix2Time(msec int64) time.Time {
 	return time.Unix(msec/1000000, (msec%1000000)*1000)
+}
+
+// fakeReadSeeker wraps an io.Reader in a buffer such that it can be
+// transparently seeked.
+type fakeReadSeeker struct {
+	i      int
+	buf    []byte
+	source io.Reader
+}
+
+func newFakeReadSeeker(r io.Reader) io.ReadSeeker {
+	return &fakeReadSeeker{source: r}
+}
+
+func (rs *fakeReadSeeker) read(n int) (int, error) {
+	p := make([]byte, n)
+	n, err := rs.source.Read(p)
+	rs.buf = append(rs.buf, p[:n]...)
+	return n, err
+}
+
+func (rs *fakeReadSeeker) Read(p []byte) (n int, err error) {
+	if want := len(p) - len(rs.buf[rs.i:]); want > 0 {
+		_, err = rs.read(want)
+	}
+	n = copy(p, rs.buf[rs.i:])
+	rs.i += n
+	return n, err
+}
+
+func (rs *fakeReadSeeker) Seek(offset int64, whence int) (int64, error) {
+	var abs int64
+	switch whence {
+	case 0:
+		abs = offset
+	case 1:
+		abs = int64(rs.i) + offset
+	case 2:
+		b, err := ioutil.ReadAll(rs.source)
+		rs.buf = append(rs.buf, b...)
+		if err != nil {
+			return 0, err
+		}
+		abs = int64(len(rs.buf)) + offset
+	default:
+		return 0, errors.New("unknown whence value to seek")
+	}
+	if abs < 0 {
+		return 0, errors.New("seek to negative offset")
+	}
+	if want := int(abs) - len(rs.buf); want > 0 {
+		_, err := rs.read(want)
+		if err != nil && err != io.EOF {
+			return 0, err
+		}
+	}
+	if max := int64(len(rs.buf)); abs > max {
+		abs = max
+	}
+	rs.i = int(abs)
+	return abs, nil
 }

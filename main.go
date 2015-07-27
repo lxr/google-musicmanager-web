@@ -3,7 +3,6 @@
 package main
 
 import (
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -27,10 +26,6 @@ func getRedirectURL(ctx context.Context) string {
 }
 
 func fixTransport(transport http.RoundTripper) {}
-
-func checkSize(s io.Seeker) error {
-	return nil
-}
 
 func main() {
 	if len(os.Args) > 1 {

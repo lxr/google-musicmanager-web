@@ -3,3 +3,4 @@
 * Perform redirect on invalid oauth token, don't report an error.
 * The index column in the song listing should sort in ascending order
   by default when clicked, but sortable.js does the opposite.
+* Figure out a way to perform binary POST/PUT requests in-browser.

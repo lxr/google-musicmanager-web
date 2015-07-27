@@ -10,17 +10,18 @@ import (
 	"time"
 
 	"golang.org/x/oauth2"
+
+	"github.com/dhowden/tag"
 	"google.golang.org/api/plus/v1"
 
-	"google-musicmanager-go"
+	"go-google-musicmanager"
 )
 
 var funcMap = map[string]interface{}{
-	"incr":    func(i int) int { return i + 1 },
-	"reverse": reversed,
-	"time":    unix2Time,
+	"incr": func(i int) int { return i + 1 },
+	"time": unix2Time,
 }
-var scopes = []string{musicmanager.MusicManagerScope, plus.PlusMeScope}
+var scopes = []string{musicmanager.Scope, plus.PlusMeScope}
 var conf = googleMustConfigFromFile("credentials.json", scopes...)
 var tpls = template.Must(template.New("static").
 	Funcs(funcMap).
@@ -123,8 +124,9 @@ func initMusicManager(r *http.Request) (interface{}, error) {
 	// user continue right where they left off.
 
 	// BUG(lor): If the access_token cookie expires just before
-	// uploading new tracks, they will need to be resubmitted after
-	// the auth flow has finished, as it cannot preserve POST data.
+	// uploading a new track, it will need to be resubmitted after
+	// the auth flow has finished, as the flow cannot preserve POST
+	// data.
 	tok, _ := r.Cookie("access_token")
 	id, _ := r.Cookie("uploader_id")
 	if tok == nil || id == nil {
@@ -136,13 +138,13 @@ func initMusicManager(r *http.Request) (interface{}, error) {
 		}
 	}
 	// Create and return a new Music Manager service.  On App
-	// Engine, fixTransport turns off SSL verification for the
+	// Engine, fixTransport turns off TLS verification for the
 	// transport so that access to the android.clients.google.com
-	// server works fine.
+	// server works fine.  It is a no-op when run standalone.
 	c := getContext(r)
 	client := conf.Client(c, &oauth2.Token{AccessToken: tok.Value})
 	fixTransport(client.Transport.(*oauth2.Transport).Base)
-	return musicmanager.New(client, id.Value)
+	return musicmanager.NewClient(client, id.Value)
 }
 
 func register(client interface{}, w http.ResponseWriter, r *http.Request) error {
@@ -150,90 +152,79 @@ func register(client interface{}, w http.ResponseWriter, r *http.Request) error 
 	if name == "" {
 		name = "Google Play Music Web Manager"
 	}
-	err := client.(*musicmanager.Service).Register(name).Do()
+	err := client.(*musicmanager.Client).Register(name)
 	if err != nil {
 		return err
 	}
 	if redirect := r.FormValue("redirect"); redirect != "" {
 		http.Redirect(w, r, redirect, http.StatusFound)
 	}
-	fmt.Fprintln(w, musicmanager.GetRegisterError("OK"))
+	fmt.Fprintln(w, "registration successful")
 	return nil
 }
 
 func tracksGet(client interface{}, w http.ResponseWriter, r *http.Request) error {
 	id := r.URL.Path
-	track, err := client.(*musicmanager.Service).Tracks.Get(id).Do()
+	url, err := client.(*musicmanager.Client).ExportTrack(id)
 	if err != nil {
 		return err
 	}
-	if name := track.Name(); name != "" {
-		name = url.QueryEscape(name)
-		// url.QueryEscape encodes spaces as plus signs, which
-		// popular browsers don't understand.  Try to
-		// percent-encode them instead.
-		if tmp, err := regexpReplaceAllString(`\+`, name, "%20"); err == nil {
-			name = tmp
-		}
-		name = "attachment; filename*=UTF8-''" + name
-		w.Header().Set("Content-Disposition", name)
-	}
-	if size := track.Size(); size > 0 {
-		size := strconv.FormatInt(size, 10)
-		w.Header().Set("Content-Length", size)
-	}
-	w.Header().Set("Content-Type", "audio/mpeg")
-	io.Copy(w, track)
+	http.Redirect(w, r, url, http.StatusFound)
+	fmt.Fprintln(w, url)
 	return nil
 }
 
 func tracksList(client interface{}, w http.ResponseWriter, r *http.Request) error {
-	list := client.(*musicmanager.Service).Tracks.List()
-	// Parse the options.
-	if t, err := time.Parse(time.RFC3339Nano, r.FormValue("updatedMin")); err == nil {
-		list.UpdatedMin(t.UnixNano() / 1000)
-	}
-	purchasedOnly, err := strconv.ParseBool(r.FormValue("purchasedOnly"))
-	if err == nil {
-		list.PurchasedOnly(purchasedOnly)
-	}
-	if pageToken := r.FormValue("pageToken"); pageToken != "" {
-		list.PageToken(pageToken)
-	}
-	// Execute the query.
-	res, err := list.Do()
+	updatedMin, _ := time.Parse(time.RFC3339Nano, r.FormValue("updatedMin"))
+	purchasedOnly, _ := strconv.ParseBool(r.FormValue("purchasedOnly"))
+	continuationToken := r.FormValue("pageToken")
+	trackList, err := client.(*musicmanager.Client).ListTracks(
+		purchasedOnly,
+		updatedMin.UnixNano()/1000,
+		continuationToken,
+	)
 	if err != nil {
 		return err
 	}
-	// Print the results.
-	// GetTracksToExportResponse doesn't report back whether it
-	// was obtained with *ExportType == ALL or
-	// *ExportType == PURCHASED_AND_PROMOTIONAL, and I don't want
-	// to define a new type just to pass this information to the
-	// template.  Fortunately, the Go protobuf compiler includes
-	// an XXX_unrecognized []byte field with every struct, which
-	// is perfect for smuggling this information to the template.
-	res.XXX_unrecognized = nil
-	if purchasedOnly {
-		res.XXX_unrecognized = []byte("true")
-	}
-	return tpls.ExecuteTemplate(w, "list.tpl", res)
+	return tpls.ExecuteTemplate(w, "list.tpl", trackList)
 }
 
 func tracksInsert(client interface{}, w http.ResponseWriter, r *http.Request) error {
-	f, _, err := r.FormFile("track")
+	defer r.Body.Close()
+	track, err := parseTrack(newFakeReadSeeker(r.Body))
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	if err := checkSize(f); err != nil {
-		return err
+	urls, errs := client.(*musicmanager.Client).ImportTracks([]*musicmanager.Track{track})
+	if errs[0] != nil {
+		return errs[0]
 	}
-	serverID, err := client.(*musicmanager.Service).Tracks.Insert(f).Do()
-	if err != nil {
-		return err
-	}
-	http.Redirect(w, r, "/tracks/", http.StatusFound)
-	fmt.Fprintln(w, serverID)
+	http.Redirect(w, r, urls[0], http.StatusTemporaryRedirect)
+	fmt.Fprintln(w, urls[0])
 	return nil
+}
+
+func parseTrack(r io.ReadSeeker) (*musicmanager.Track, error) {
+	metadata, err := tag.ReadFrom(r)
+	switch {
+	case err == tag.ErrNoTagsFound:
+		return &musicmanager.Track{Title: "Unknown Track"}, nil
+	case err != nil:
+		return nil, err
+	}
+	ti, tn := metadata.Track()
+	di, dn := metadata.Disc()
+	return &musicmanager.Track{
+		Title:           metadata.Title(),
+		Album:           metadata.Album(),
+		Artist:          metadata.Artist(),
+		AlbumArtist:     metadata.AlbumArtist(),
+		Composer:        metadata.Composer(),
+		Year:            metadata.Year(),
+		Genre:           metadata.Genre(),
+		TrackNumber:     ti,
+		TotalTrackCount: tn,
+		DiscNumber:      di,
+		TotalDiscCount:  dn,
+	}, nil
 }
