@@ -22,12 +22,12 @@
 				<a href="?purchasedOnly=true">Purchased and promotional</a>
 			</p>
 			<p class="stats">
-				{{len .DownloadTrackInfo}} songs •
-				Last updated {{(time .UpdatedMin).Format "2006-01-02T15:04:05Z07:00"}}
-				{{if .ContinuationToken}}
+				{{len .Items}} songs •
+				Last modified {{(time .UpdatedMin).Format "2006-01-02T15:04:05Z07:00"}}
+				{{if .PageToken}}
 				• <a rel="next"
-					data-token="{{.ContinuationToken}}"
-					href="?pageToken={{.ContinuationToken}}&purchasedOnly={{.PurchasedOnly}}"
+					data-token="{{.PageToken}}"
+					href="?pageToken={{.PageToken}}&purchasedOnly={{.PurchasedOnly}}"
 				>Next page</a>
 				{{end}}
 			</p>
@@ -43,7 +43,7 @@
 				</tr>
 			</thead>
 			<tbody>
-			{{range $i, $track := .DownloadTrackInfo}}
+			{{range $i, $track := .Items}}
 				<tr id="{{$track.Id}}" ondblclick="this.querySelector('[download]').click()">
 					<td headers="index">{{incr $i}}</td>
 					<td headers="title">{{$track.Title}}</td>
