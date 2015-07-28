@@ -117,9 +117,9 @@ func initMusicManager(r *http.Request) (interface{}, error) {
 	// user continue right where they left off.
 
 	// BUG(lor): If the access_token cookie expires just before
-	// uploading a new track, it will need to be resubmitted after
-	// the auth flow has finished, as the flow cannot preserve POST
-	// data.
+	// uploading a new track, the track will need to be resubmitted
+	// after the auth flow has finished, as the flow cannot preserve
+	// POST data.
 	tok, _ := r.Cookie("access_token")
 	id, _ := r.Cookie("uploader_id")
 	if tok == nil || id == nil {

@@ -7,10 +7,10 @@ methods and endpoints it supports are as follows:
 
 	GET /tracks/
 		Returns an HTML listing of all tracks in the user's
-		library, from most recently accessed to the least.
-		Takes the optional query parameters purchasedOnly=true
+		library, from least recently accessed to the most.
+		Takes the optional query parameters purchasedOnly={bool}
 		to filter only for purchased and promotional tracks,
-		updatedMin={{RFC3339}} to filter out tracks that were
+		updatedMin={RFC3339} to filter out tracks that were
 		last modified before the given timestamp, and
 		pageToken={string} to page through large result sets.
 		(The token for the next page can be found in the
@@ -104,7 +104,7 @@ On startup, Google Play Music Web Manager expects to find in the current
 working directory a file called credentials.json, which contains
 web application credentials for a Google Cloud project with the Google+
 API enabled, and a Go html/template file static/list.tpl. The latter
-is included with the default distribution; the former can be acquired by
+is included in the default distribution; the former can be acquired by
 registering a new project in the Google Developers Console
 (https://console.developers.google.com) and creating a new client ID for
 a web application under the "Credentials" tab.  Note that Google Play
@@ -118,9 +118,9 @@ package main
 
 // BUG(lor): Embedded album art is not currently uploaded.
 
-// BUG(lor): Until someone writes a pure-Go audio transcoding library,
-// Google Play Music Web Manager cannot perform song matching, and it
-// can only support MP3 files.
+// BUG(lor): As Google Play Music Web Manager attempts to only read as
+// little data as possible when uploading a track, it cannot perform
+// song matching.
 
 // BUG(lor): Use of this program may constitute a violation of Google's
 // terms of service under paragraph 2 of
