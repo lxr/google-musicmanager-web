@@ -14,7 +14,7 @@ import (
 	"github.com/dhowden/tag"
 	"google.golang.org/api/plus/v1"
 
-	"go-google-musicmanager"
+	"my-git.appspot.com/go.google.musicmanager"
 )
 
 var funcMap = map[string]interface{}{
