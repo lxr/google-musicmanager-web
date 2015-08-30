@@ -1,9 +1,9 @@
 /*
 
 Google Play Music Web Manager presents a simple RESTful web interface
-for managing your Google Play Music library. It takes a single argument,
-the TCP address where to start serving (default localhost:8080.) The
-methods and endpoints it supports are as follows:
+for managing your Google Play Music library.  It takes a single
+argument, the TCP address where to start serving (default
+localhost:8080).  The methods and endpoints it supports are as follows:
 
 	GET /tracks/
 		Returns an HTML listing of all tracks in the user's
@@ -94,7 +94,7 @@ gotchas.  See the source file appengine.go for details.
 On startup, Google Play Music Web Manager expects to find in the current
 working directory a file called credentials.json, which contains
 web application credentials for a Google Cloud project with the Google+
-API enabled, and a Go html/template file static/list.tpl. The latter
+API enabled, and a Go html/template file static/list.tpl.  The latter
 is included in the default distribution; the former can be acquired by
 registering a new project in the Google Developers Console
 (https://console.developers.google.com) and creating a new client ID for
