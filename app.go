@@ -160,7 +160,6 @@ func tracksGet(client interface{}, w http.ResponseWriter, r *http.Request) error
 		return err
 	}
 	http.Redirect(w, r, url, http.StatusFound)
-	fmt.Fprintln(w, url)
 	return nil
 }
 
