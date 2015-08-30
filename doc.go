@@ -27,20 +27,11 @@ methods and endpoints it supports are as follows:
 		response body.
 
 	POST /tracks/
-		Redirects the client to a temporary
-		uploadsj.clients.google.com upload URL.  The URL is also
-		contained in the redirect response body.  The redirect
-		is performed with the 307 Temporary Redirect status
-		code, which should transparently preserve the POST data
-		in modern clients.  The POST body should be raw MP3
-		data.  Google Play Music Web Manager only needs to read
-		the file metadata in order to generate the upload URL,
-		so ID3v2 tags are recommended, as the response handler
-		can then return without reading the entire file.  (A
-		consequence of this is that a Google Play Music Web
-		Manager needs to read a file with no tags in its
-		entirety, as any ID3v1 tags are located after the end of
-		the audio data.)
+		Uploads a new track to the user's library.  The POST
+		body must be in multipart form, with `track` being
+		the form variable read for the file to upload.  See the
+		BUGS section for limitations on uploading.  On success,
+		this method redirects back to the track listing.
 
 All endpoints expect the request to carry the access_token and
 uploader_id cookies, which are a Google OAuth 2.0 token carrying the
@@ -118,9 +109,10 @@ package main
 
 // BUG(lor): Embedded album art is not currently uploaded.
 
-// BUG(lor): As Google Play Music Web Manager attempts to only read as
-// little data as possible when uploading a track, it cannot perform
-// song matching.
+// BUG(lor): Until someone writes a pure-Go audio transcoding library,
+// Google Play Music Web Manager can only upload MP3 tracks, and it
+// cannot perform song matching (beyond detecting which tracks it has
+// already uploaded).
 
 // BUG(lor): Use of this program may constitute a violation of Google's
 // terms of service under paragraph 2 of

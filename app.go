@@ -130,13 +130,10 @@ func initMusicManager(r *http.Request) (interface{}, error) {
 			Location: "/auth?redirect=" + path,
 		}
 	}
-	// Create and return a new Music Manager service.  On App
-	// Engine, fixTransport turns off TLS verification for the
-	// transport so that access to the android.clients.google.com
-	// server works fine.  It is a no-op when run standalone.
+	// Create and return a new Music Manager service.
 	c := getContext(r)
 	client := conf.Client(c, &oauth2.Token{AccessToken: tok.Value})
-	fixTransport(client.Transport.(*oauth2.Transport).Base)
+	client.Transport.(*oauth2.Transport).Base = getTransport(c)
 	return musicmanager.NewClient(client, id.Value)
 }
 
@@ -183,8 +180,13 @@ func tracksList(client interface{}, w http.ResponseWriter, r *http.Request) erro
 }
 
 func tracksInsert(client interface{}, w http.ResponseWriter, r *http.Request) error {
-	defer r.Body.Close()
-	track, err := parseTrack(newFakeReadSeeker(r.Body))
+	r.Body = http.MaxBytesReader(w, r.Body, MaxUploadSize)
+	f, fh, err := r.FormFile("track")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	track, err := parseTrack(f, fh.Filename)
 	if err != nil {
 		return err
 	}
@@ -192,22 +194,38 @@ func tracksInsert(client interface{}, w http.ResponseWriter, r *http.Request) er
 	if errs[0] != nil {
 		return errs[0]
 	}
-	http.Redirect(w, r, urls[0], http.StatusTemporaryRedirect)
-	fmt.Fprintln(w, urls[0])
+	cl := &http.Client{Transport: getTransport(getContext(r))}
+	resp, err := cl.Post(urls[0], "audio/mpeg", f)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	http.Redirect(w, r, r.RequestURI, http.StatusFound)
+	io.Copy(w, resp.Body) // for debugging
 	return nil
 }
 
-func parseTrack(r io.ReadSeeker) (*musicmanager.Track, error) {
+func parseTrack(r io.ReadSeeker, name string) (*musicmanager.Track, error) {
+	sum, err := tag.Sum(r)
+	err = rewind(r, err)
+	if err != nil {
+		return nil, err
+	}
 	metadata, err := tag.ReadFrom(r)
+	err = rewind(r, err)
 	switch {
 	case err == tag.ErrNoTagsFound:
-		return &musicmanager.Track{Title: "Unknown Track"}, nil
+		return &musicmanager.Track{
+			ClientId: sum,
+			Title:    name,
+		}, nil
 	case err != nil:
 		return nil, err
 	}
 	ti, tn := metadata.Track()
 	di, dn := metadata.Disc()
 	return &musicmanager.Track{
+		ClientId:        sum,
 		Title:           metadata.Title(),
 		Album:           metadata.Album(),
 		Artist:          metadata.Artist(),

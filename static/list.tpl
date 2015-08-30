@@ -31,6 +31,11 @@
 				>Next page</a>
 				{{end}}
 			</p>
+			<form method="POST" enctype="multipart/form-data">
+				<label for="upload">Upload a song (MP3)</label>
+				<input type="file" name="track" id="upload" accept="audio/mpeg,.mp3" required>
+				<input type="submit">
+			</form>
 		</div>
 		<table id="response" data-sortable>
 			<thead>

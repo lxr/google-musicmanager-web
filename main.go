@@ -11,11 +11,15 @@ import (
 	"golang.org/x/oauth2"
 )
 
+const MaxUploadSize = int64(^uint64(0) >> 1) // max int64
+
 func getContext(r *http.Request) context.Context {
 	return oauth2.NoContext
 }
 
-func fixTransport(transport http.RoundTripper) {}
+func getTransport(ctx context.Context) http.RoundTripper {
+	return http.DefaultTransport
+}
 
 func main() {
 	addr := "localhost:8080"

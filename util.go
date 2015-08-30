@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -88,63 +87,13 @@ func unix2Time(msec int64) time.Time {
 	return time.Unix(msec/1000000, (msec%1000000)*1000)
 }
 
-// fakeReadSeeker wraps an io.Reader in a buffer such that it can be
-// transparently seeked.
-type fakeReadSeeker struct {
-	i      int
-	buf    []byte
-	source io.Reader
-}
-
-func newFakeReadSeeker(r io.Reader) io.ReadSeeker {
-	return &fakeReadSeeker{source: r}
-}
-
-func (rs *fakeReadSeeker) read(n int) (int, error) {
-	p := make([]byte, n)
-	n, err := rs.source.Read(p)
-	rs.buf = append(rs.buf, p[:n]...)
-	return n, err
-}
-
-func (rs *fakeReadSeeker) Read(p []byte) (n int, err error) {
-	if want := len(p) - len(rs.buf[rs.i:]); want > 0 {
-		_, err = rs.read(want)
+// rewind seeks back to the start of s.  It returns err if it is not
+// nil, and any seek error encountered otherwise.
+func rewind(s io.Seeker, err error) error {
+	_, err1 := s.Seek(0, 0)
+	if err != nil {
+		return err
+	} else {
+		return err1
 	}
-	n = copy(p, rs.buf[rs.i:])
-	rs.i += n
-	return n, err
-}
-
-func (rs *fakeReadSeeker) Seek(offset int64, whence int) (int64, error) {
-	var abs int64
-	switch whence {
-	case 0:
-		abs = offset
-	case 1:
-		abs = int64(rs.i) + offset
-	case 2:
-		b, err := ioutil.ReadAll(rs.source)
-		rs.buf = append(rs.buf, b...)
-		if err != nil {
-			return 0, err
-		}
-		abs = int64(len(rs.buf)) + offset
-	default:
-		return 0, errors.New("unknown whence value to seek")
-	}
-	if abs < 0 {
-		return 0, errors.New("seek to negative offset")
-	}
-	if want := int(abs) - len(rs.buf); want > 0 {
-		_, err := rs.read(want)
-		if err != nil && err != io.EOF {
-			return 0, err
-		}
-	}
-	if max := int64(len(rs.buf)); abs > max {
-		abs = max
-	}
-	rs.i = int(abs)
-	return abs, nil
 }
