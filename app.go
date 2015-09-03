@@ -198,9 +198,15 @@ func tracksInsert(client interface{}, w http.ResponseWriter, r *http.Request) er
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	id, err := musicmanager.CheckImportResponse(resp)
+	if err != nil {
+		return err
+	}
+	// Insert is a POST request, so http.Redirect doesn't write a
+	// note to the response.  We instead write the uploaded track's
+	// server ID for debugging purposes.
 	http.Redirect(w, r, r.RequestURI, http.StatusFound)
-	io.Copy(w, resp.Body) // for debugging
+	fmt.Fprintln(w, id)
 	return nil
 }
 
